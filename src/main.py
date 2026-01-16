@@ -20,9 +20,13 @@ def main():
     # 現在座標取得
     pos = motor.get_param("ABS_POS")
     print("ABS_POS =", pos)
+    motor.set_param("ALARM_EN", 0x00)
+    status = motor.get_status()
+    print("STATUS(after clear) = 0x%04X" % status)
+    status = motor.get_status()
+    print("STATUS = 0x%04X" % status)
+    motor.run(1, 0x2000)  # 超低速
 
 if __name__ == "__main__":
     main()
-
-
 

@@ -78,6 +78,7 @@ class L6470:
     CMD_GET_PARAM    = 0x20
     CMD_RESET_DEVICE = 0xC0
     CMD_GET_STATUS   = 0xD0
+    CMD_RUN = 0x50  # RUN + direction
 
     def _select(self):
         self.cs.value(0)
@@ -165,4 +166,17 @@ class L6470:
     def _wait_busy_release(self):
         while self.busy.value() == 0:
             pass
+
+    def run(self, direction: int, speed: int):
+        """
+        direction: 0=REV, 1=FWD
+        speed: 20bit value
+        """
+        if speed > 0xFFFFF:
+            speed = 0xFFFFF
+
+        self._send_u(self.CMD_RUN | (direction & 0x01))
+        self._send_u((speed >> 16) & 0xFF)
+        self._send_u((speed >> 8) & 0xFF)
+        self._send_u(speed & 0xFF)
 
