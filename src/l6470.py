@@ -73,7 +73,11 @@ class L6470:
         "STATUS"    :(0x19, 16),
     }
 
+    REV = 0  # 逆回転
+    FWD = 1  # 正転
     CMD_NOP          = 0x00
+    CMD_HARD_HIZ = 0xA8
+    CMD_SOFT_HIZ = 0xA0
     CMD_SET_PARAM    = 0x00
     CMD_GET_PARAM    = 0x20
     CMD_RESET_DEVICE = 0xC0
@@ -88,8 +92,7 @@ class L6470:
 
     def _hardware_reset(self):
         self.resetn.value(0)
-        time.sleep_ms(10)
-        time.sleep_ms(10000)
+        time.sleep_ms(100)
         self.resetn.value(1)
         time.sleep_ms(10)
       
@@ -105,11 +108,12 @@ class L6470:
 
     def reset_device(self):
         """SOFT_RESET (ResetDevice command)"""
-        self._send_u(self.CMD_NOP)          #修正
-        self._send_u(self.CMD_NOP)          #修正
-        self._send_u(self.CMD_NOP)          #修正
-        self._send_u(self.CMD_NOP)          #修正
-        self._send_u(self.CMD_RESET_DEVICE) #修正
+        self._send_u(self.CMD_NOP)
+        self._send_u(self.CMD_NOP)
+        self._send_u(self.CMD_NOP)
+        self._send_u(self.CMD_NOP)
+        self._send_u(self.CMD_RESET_DEVICE)
+        self._wait_busy_release()
 
     def set_param(self, name: str, value: int):
         """
@@ -157,26 +161,43 @@ class L6470:
         """
         Read STATUS register (and clear FLAG)
         """
+        self._wait_busy_release()
         self.cs.value(0)
         self.spi.write(bytes([self.CMD_GET_STATUS]))
         data = self.spi.read(2)
         self.cs.value(1)
         return (data[0] << 8) | data[1]
 
-    def _wait_busy_release(self):
-        while self.busy.value() == 0:
-            pass
-
     def run(self, direction: int, speed: int):
-        """
-        direction: 0=REV, 1=FWD
-        speed: 20bit value
-        """
+        """モータを回転。完了まで待つ（デフォルト）"""
+        self._check_direction(direction)
+        self._run_internal(direction, speed)
+        self._wait_busy_release()
+
+    def run_no_wait(self, direction: int, speed: int):
+        """モータを回転。非同期（待たない）"""
+        self._check_direction(direction)
+        self._run_internal(direction, speed)
+
+    def _run_internal(self, direction: int, speed: int):
         if speed > 0xFFFFF:
             speed = 0xFFFFF
-
         self._send_u(self.CMD_RUN | (direction & 0x01))
         self._send_u((speed >> 16) & 0xFF)
         self._send_u((speed >> 8) & 0xFF)
         self._send_u(speed & 0xFF)
+
+    def _check_direction(self, direction: int):
+        if direction not in (self.REV, self.FWD):
+            raise ValueError(f"Invalid direction: {direction}. Use L6470.REV or L6470.FWD")
+
+    def _wait_busy_release(self, sleep_us=50):
+        """BUSY=1 になるまで待つ（低負荷）"""
+        while self.busy.value() == 0:
+            time.sleep_us(sleep_us)
+
+    def wait_motion_end(self):
+        """モータ動作完了まで待つ"""
+        while self.busy.value() == 0:
+            time.sleep_ms(1)
 

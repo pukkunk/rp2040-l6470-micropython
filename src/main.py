@@ -25,8 +25,11 @@ def main():
     print("STATUS(after clear) = 0x%04X" % status)
     status = motor.get_status()
     print("STATUS = 0x%04X" % status)
-    motor.run(1, 0x2000)  # 超低速
+    #speed = 0x020000  # かなり速い
+    speed = 0x2000  # 超低速
+    motor.run(L6470.FWD, speed)
+    status = motor.get_status()
+    print("STATUS(after run) = 0x%04X" % status)
 
 if __name__ == "__main__":
     main()
-

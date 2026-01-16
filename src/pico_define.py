@@ -70,6 +70,3 @@ def led_off(led, wait_time_sec: float):
     led.value(0)  # LEDを消灯
     time.sleep(wait_time_sec)
 # ------- for pico onboard LED end
-
-
-
