@@ -4,9 +4,50 @@
 
 from machine import SPI, Pin
 import time
-import pico_define as pd   # ← 既存定義を使う前提
+import pico_define as pd   # 既存定義を使う前提
 
 class L6470:
+    REV = 0  # 逆回転
+    FWD = 1  # 正転
+
+    CMD_NOP          = 0x00
+    CMD_HARD_HIZ     = 0xA8
+    CMD_SOFT_HIZ     = 0xA0
+    CMD_SET_PARAM    = 0x00
+    CMD_GET_PARAM    = 0x20
+    CMD_RESET_DEVICE = 0xC0
+    CMD_GET_STATUS   = 0xD0
+    CMD_RUN          = 0x50  # RUN + direction
+
+    # 内部パラメータマップ (address, bit_length, access)
+    _L6470_RAW = {
+        "ABS_POS"   :(0x01, 22, "R, WS"),
+        "EL_POS"    :(0x02, 9,  "R, WS"),
+        "MARK"      :(0x03, 22, "R, WR"),
+        "SPEED"     :(0x04, 20, "R"),
+        "ACC"       :(0x05, 12, "R, WS"),
+        "DEC"       :(0x06, 12, "R, WS"),
+        "MAX_SPEED" :(0x07, 10, "R, WR"),
+        "MIN_SPEED" :(0x08, 13, "R, WS"),
+        "FS_SPD"    :(0x15, 10, "R, WR"),
+        "KVAL_HOLD" :(0x09, 8,  "R, WR"),
+        "KVAL_RUN"  :(0x0A, 8,  "R, WR"),
+        "KVAL_ACC"  :(0x0B, 8,  "R, WR"),
+        "KVAL_DEC"  :(0x0C, 8,  "R, WR"),
+        "INT_SPEED" :(0x0D, 14, "R, WH"),
+        "ST_SLP"    :(0x0E, 8,  "R, WH"),
+        "FN_SLP_ACC":(0x0F, 8,  "R, WH"),
+        "FN_SLP_DEC":(0x10, 8,  "R, WH"),
+        "K_THERM"   :(0x11, 4,  "R, WR"),
+        "ADC_OUT"   :(0x12, 5,  "R"),
+        "OCD_TH"    :(0x13, 4,  "R, WR"),
+        "STALL_TH"  :(0x14, 7,  "R, WR"),
+        "STEP_MODE" :(0x16, 8,  "R, WH"),
+        "ALARM_EN"  :(0x17, 8,  "R, WS"),
+        "CONFIG"    :(0x18,16,  "R, WH"),
+        "STATUS"    :(0x19,16,  "R"),
+    }
+
     def __init__(self, spi_port=0,
                  sck=pd.PIN_SCK,
                  mosi=pd.PIN_MOSI,
@@ -37,53 +78,13 @@ class L6470:
         )
 
         # --- Hardware reset ---
-        pd.led_toggle(pd.led, 5, 1)  # LEDを3回点滅 #修正
+        pd.led_toggle(pd.led, 5, 1)
         self._hardware_reset()
         self.reset_device()
 
     # -------------------------------------------------
     # Internal utilities
     # -------------------------------------------------
-    _L6470_RAW = {
-        # NAME        :(address, bit_length)
-        "ABS_POS"   :(0x01, 22),
-        "EL_POS"    :(0x02, 9),
-        "MARK"      :(0x03, 22),
-        "SPEED"     :(0x04, 20),
-        "ACC"       :(0x05, 12),
-        "DEC"       :(0x06, 12),
-        "MAX_SPEED" :(0x07, 10),
-        "MIN_SPEED" :(0x08, 13),
-        "FS_SPD"    :(0x15, 10),
-        "KVAL_HOLD" :(0x09, 8),
-        "KVAL_RUN"  :(0x0A, 8),
-        "KVAL_ACC"  :(0x0B, 8),
-        "KVAL_DEC"  :(0x0C, 8),
-        "INT_SPEED" :(0x0D, 14),
-        "ST_SLP"    :(0x0E, 8),
-        "FN_SLP_ACC":(0x0F, 8),
-        "FN_SLP_DEC":(0x10, 8),
-        "K_THERM"   :(0x11, 4),
-        "ADC_OUT"   :(0x12, 5),
-        "OCD_TH"    :(0x13, 4),
-        "STALL_TH"  :(0x14, 7),
-        "STEP_MODE" :(0x16, 8),
-        "ALARM_EN"  :(0x17, 8),
-        "CONFIG"    :(0x18, 16),
-        "STATUS"    :(0x19, 16),
-    }
-
-    REV = 0  # 逆回転
-    FWD = 1  # 正転
-    CMD_NOP          = 0x00
-    CMD_HARD_HIZ = 0xA8
-    CMD_SOFT_HIZ = 0xA0
-    CMD_SET_PARAM    = 0x00
-    CMD_GET_PARAM    = 0x20
-    CMD_RESET_DEVICE = 0xC0
-    CMD_GET_STATUS   = 0xD0
-    CMD_RUN = 0x50  # RUN + direction
-
     def _select(self):
         self.cs.value(0)
 
@@ -95,46 +96,33 @@ class L6470:
         time.sleep_ms(100)
         self.resetn.value(1)
         time.sleep_ms(10)
-      
-    def _spi_write(self, data: int):
-        self.spi.write(bytearray([data]))
 
-    def _send_u(self, value: int):
-        """BUSY無視で1バイト送信"""
-        self.cs.value(0)
-        self.spi.write(bytes([value & 0xFF]))
-        self.cs.value(1)
-        time.sleep_us(2)
+    def _wait_busy_release(self, sleep_us=50):
+        while self.busy.value() == 0:
+            time.sleep_us(sleep_us)
 
-    def reset_device(self):
-        """SOFT_RESET (ResetDevice command)"""
-        self._send_u(self.CMD_NOP)
-        self._send_u(self.CMD_NOP)
-        self._send_u(self.CMD_NOP)
-        self._send_u(self.CMD_NOP)
-        self._send_u(self.CMD_RESET_DEVICE)
-        self._wait_busy_release()
-
+    # -------------------------------------------------
+    # Parameter access
+    # -------------------------------------------------
     def set_param(self, name: str, value: int):
         """
         Set L6470 parameter by name
         """
         if name not in self._L6470_RAW:
             raise ValueError("Unknown parameter: " + name)
-
-        addr, bit_len = self._L6470_RAW[name]
+        addr, bit_len, _ = self._L6470_RAW[name]
         byte_len = (bit_len + 7) // 8
         max_val = (1 << bit_len) - 1
-
         if value < 0 or value > max_val:
             raise ValueError(f"{name} out of range (0..{max_val})")
 
-        # send command
-        self._send_u(self.CMD_SET_PARAM | addr)
-
-        # send MSB first
-        for shift in range((byte_len - 1) * 8, -1, -8):
-            self._send_u((value >> shift) & 0xFF)
+        # データをまとめて送信
+        data = [self.CMD_SET_PARAM | addr] + [(value >> (8*(byte_len-i-1))) & 0xFF for i in range(byte_len)]
+        self._select()
+        try:
+            self.spi.write(bytes(data))
+        finally:
+            self._deselect()
 
     def get_param(self, name: str) -> int:
         """
@@ -142,62 +130,97 @@ class L6470:
         """
         if name not in self._L6470_RAW:
             raise ValueError("Unknown parameter: " + name)
-
-        addr, bit_len = self._L6470_RAW[name]
+        addr, bit_len, _ = self._L6470_RAW[name]
         byte_len = (bit_len + 7) // 8
-
         value = 0
-        self._send_u(self.CMD_GET_PARAM | addr)
 
-        for _ in range(byte_len):
-            self.cs.value(0)
-            b = self.spi.read(1)[0]
-            self.cs.value(1)
-            value = (value << 8) | b
-
+        self._select()
+        try:
+            self.spi.write(bytes([self.CMD_GET_PARAM | addr]))
+            for _ in range(byte_len):
+                b = self.spi.read(1)[0]
+                value = (value << 8) | b
+        finally:
+            self._deselect()
         return value
 
     def get_status(self) -> int:
-        """
-        Read STATUS register (and clear FLAG)
-        """
         self._wait_busy_release()
-        self.cs.value(0)
-        self.spi.write(bytes([self.CMD_GET_STATUS]))
-        data = self.spi.read(2)
-        self.cs.value(1)
+        self._select()
+        try:
+            self.spi.write(bytes([self.CMD_GET_STATUS]))
+            data = self.spi.read(2)
+        finally:
+            self._deselect()
         return (data[0] << 8) | data[1]
 
+    # -------------------------------------------------
+    # Motion
+    # -------------------------------------------------
+    def exit_hiz(self):
+        # ダミーRUNでHi-Z解除
+        data = [self.CMD_RUN | self.FWD, 0x00, 0x00, 0x01]
+        self._select()
+        try:
+            self.spi.write(bytes(data))
+        finally:
+            self._deselect()
+        time.sleep_ms(1)
+
     def run(self, direction: int, speed: int):
-        """モータを回転。完了まで待つ（デフォルト）"""
         self._check_direction(direction)
         self._run_internal(direction, speed)
         self._wait_busy_release()
 
     def run_no_wait(self, direction: int, speed: int):
-        """モータを回転。非同期（待たない）"""
         self._check_direction(direction)
         self._run_internal(direction, speed)
 
     def _run_internal(self, direction: int, speed: int):
         if speed > 0xFFFFF:
             speed = 0xFFFFF
-        self._send_u(self.CMD_RUN | (direction & 0x01))
-        self._send_u((speed >> 16) & 0xFF)
-        self._send_u((speed >> 8) & 0xFF)
-        self._send_u(speed & 0xFF)
+        data = [self.CMD_RUN | (direction & 0x01),
+                (speed >> 16) & 0xFF,
+                (speed >> 8) & 0xFF,
+                speed & 0xFF]
+        self._select()
+        try:
+            self.spi.write(bytes(data))
+        finally:
+            self._deselect()
 
     def _check_direction(self, direction: int):
         if direction not in (self.REV, self.FWD):
-            raise ValueError(f"Invalid direction: {direction}. Use L6470.REV or L6470.FWD")
+            raise ValueError(f"Invalid direction: {direction}")
 
-    def _wait_busy_release(self, sleep_us=50):
-        """BUSY=1 になるまで待つ（低負荷）"""
-        while self.busy.value() == 0:
-            time.sleep_us(sleep_us)
+    def reset_device(self):
+        data = [self.CMD_NOP]*4 + [self.CMD_RESET_DEVICE]
+        self._select()
+        try:
+            self.spi.write(bytes(data))
+        finally:
+            self._deselect()
+        self._wait_busy_release()
 
     def wait_motion_end(self):
-        """モータ動作完了まで待つ"""
         while self.busy.value() == 0:
             time.sleep_ms(1)
 
+# ------------------------------
+# Auto-generate set/get functions
+# ------------------------------
+def _make_setter(name):
+    def setter(self, val):
+        return self.set_param(name, val)
+    return setter
+
+def _make_getter(name):
+    def getter(self):
+        return self.get_param(name)
+    return getter
+
+for pname, (addr, bits, access) in L6470._L6470_RAW.items():
+    if "W" in access:
+        setattr(L6470, f"set_{pname}", _make_setter(pname))
+    if "R" in access:
+        setattr(L6470, f"get_{pname}", _make_getter(pname))

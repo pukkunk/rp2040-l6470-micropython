@@ -1,35 +1,32 @@
-# main.py
 from l6470 import L6470
 import pico_define as pd
+import time
 
 def main():
-
     motor = L6470()
     pd.led_on(pd.led, 0)
 
     print("L6470 instance created")
+    motor.set_STEP_MODE(0b111)
 
-    # 1/128 microstep
-    motor.set_param("STEP_MODE", 0b111)
-
-    # 加速度・最大速度
     motor.set_param("ACC", 0x40)
     motor.set_param("DEC", 0x40)
-    motor.set_param("MAX_SPEED", 0x100)
+    motor.set_param("MAX_SPEED", 0x40)
+    motor.set_param("MIN_SPEED", 0x01)
+    motor.set_param("FS_SPD", 0x3FF)
 
-    # 現在座標取得
-    pos = motor.get_param("ABS_POS")
-    print("ABS_POS =", pos)
-    motor.set_param("ALARM_EN", 0x00)
-    status = motor.get_status()
-    print("STATUS(after clear) = 0x%04X" % status)
-    status = motor.get_status()
-    print("STATUS = 0x%04X" % status)
-    #speed = 0x020000  # かなり速い
+    motor.set_param("KVAL_HOLD", 0x50)
+    motor.set_param("KVAL_RUN", 0x50)
+    motor.set_param("KVAL_ACC", 0x50)
+    motor.set_param("KVAL_DEC", 0x50)
+
+    motor.set_param("STEP_MODE", 0x03)  # 1/16
+
     speed = 0x2000  # 超低速
     motor.run(L6470.FWD, speed)
-    status = motor.get_status()
-    print("STATUS(after run) = 0x%04X" % status)
+
+    print("END")
 
 if __name__ == "__main__":
     main()
+
