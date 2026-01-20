@@ -25,6 +25,24 @@ SPI_CLK_06MHZ = 6000000
 SPI_CLK_04MHZ = 4000000
 SPI_CLK_01MHZ = 1000000
 
+class TrackingMode:
+    SIDEREAL = 0
+    SOLAR    = 1
+    LUNAR    = 2
+
+
+TRACKING_SPEED = {
+    TrackingMode.SIDEREAL: 0x11600,  # 恒星時
+    TrackingMode.SOLAR:    0x11500,  # 太陽時
+    TrackingMode.LUNAR:    0x10800,  # 月時
+}
+
+
+def start_tracking(motor, mode):
+    """追尾開始"""
+    speed = TRACKING_SPEED[mode]
+    motor.run(L6470.FWD, speed)
+
 def main():
     motor = L6470(
         spi_port = 0,
@@ -71,8 +89,8 @@ def main():
     )
     motor.set_param("STEP_MODE", step_mode)
 
-    speed = 0x2000  # 超低速
-    motor.run(L6470.FWD, speed)
+    #speed = 0x2000  # 超低速
+    start_tracking(motor, TrackingMode.SIDEREAL)
 
     time.sleep(2)  # 回り始めるまで待つ
 
