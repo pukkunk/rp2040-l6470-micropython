@@ -10,7 +10,7 @@ PIN_MISO = 4    # → GPIO4 (GP4)    # pin No #06
 PIN_CS = 5      # → GPIO5 (GP5)    # pin No #07
 
 GP00 = 0  # pin No #01
-GP06 = 6  # pin No #0957
+GP06 = 6  # pin No #09
 
 PIN_BUSY = GP00
 PIN_RESETN = GP06
