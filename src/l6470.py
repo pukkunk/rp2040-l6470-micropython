@@ -3,8 +3,8 @@
 # Datasheet based, clean-room implementation
 
 from machine import SPI, Pin
+import pico_define as pd
 import time
-import pico_define as pd   # 既存定義を使う前提
 
 class L6470:
     REV = 0  # 逆回転
@@ -48,21 +48,24 @@ class L6470:
         "STATUS"    :(0x19,16,  "R"),
     }
 
-    def __init__(self, spi_port=0,
-                 sck=pd.PIN_SCK,
-                 mosi=pd.PIN_MOSI,
-                 miso=pd.PIN_MISO,
-                 cs=pd.PIN_CS,
-                 busy=pd.PIN_BUSY,
-                 resetn=pd.PIN_RESETN,
-                 baudrate=1_000_000):
+    def __init__(
+        self,
+        spi_port,
+        sck,
+        mosi,
+        miso,
+        cs,
+        busy,
+        resetn,
+        baudrate=1_000_000,
+    ):
 
         print("L6470 init")
 
         # --- GPIO ---
-        self.cs = Pin(cs, Pin.OUT, value=1)
+        self.cs     = Pin(cs, Pin.OUT, value=1)
+        self.busy   = Pin(busy, Pin.IN)
         self.resetn = Pin(resetn, Pin.OUT, value=1)
-        self.busy = Pin(busy, Pin.IN)
 
         # --- SPI (Mode 3) ---
         self.spi = SPI(
@@ -78,7 +81,6 @@ class L6470:
         )
 
         # --- Hardware reset ---
-        pd.led_toggle(pd.led, 5, 1)
         self._hardware_reset()
         self.reset_device()
 

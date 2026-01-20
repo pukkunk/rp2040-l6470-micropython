@@ -63,5 +63,5 @@ STMicroelectronics **L6470 ステッピングモータドライバ** を
 
 ---
 
-ピン番号は `pico_define.py` に定義
+ピン番号は `L6470()引数で指定する。
 
