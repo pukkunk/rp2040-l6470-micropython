@@ -2,7 +2,6 @@
 # L6470 Stepper Motor Driver (MicroPython)
 # Datasheet based, clean-room implementation
 
-from machine import SPI, Pin
 import pico_define as pd
 import time
 
@@ -48,40 +47,17 @@ class L6470:
         "STATUS"    :(0x19,16,  "R"),
     }
 
-    def __init__(
-        self,
-        spi_port,
-        sck,
-        mosi,
-        miso,
-        cs,
-        busy,
-        resetn,
-        baudrate=1_000_000,
-    ):
+    def __init__(self, spi, cs, busy=None, resetn=None):
+        self.spi = spi
+        self.cs = cs
+        self.busy = busy
+        self.resetn = resetn
 
-        print("L6470 init")
+        self.cs.value(1)
 
-        # --- GPIO ---
-        self.cs     = Pin(cs, Pin.OUT, value=1)
-        self.busy   = Pin(busy, Pin.IN)
-        self.resetn = Pin(resetn, Pin.OUT, value=1)
+        if self.resetn:
+            self._hardware_reset()
 
-        # --- SPI (Mode 3) ---
-        self.spi = SPI(
-            spi_port,
-            baudrate=baudrate,
-            polarity=1,   # CPOL=1
-            phase=1,      # CPHA=1
-            bits=8,
-            firstbit=SPI.MSB,
-            sck=Pin(sck),
-            mosi=Pin(mosi),
-            miso=Pin(miso),
-        )
-
-        # --- Hardware reset ---
-        self._hardware_reset()
         self.reset_device()
 
     # -------------------------------------------------
@@ -100,6 +76,8 @@ class L6470:
         time.sleep_ms(10)
 
     def _wait_busy_release(self, sleep_us=50):
+        if not self.busy:
+            return
         while self.busy.value() == 0:
             time.sleep_us(sleep_us)
 
@@ -205,6 +183,8 @@ class L6470:
         self._wait_busy_release()
 
     def wait_motion_end(self):
+        if not self.busy:
+            return
         while self.busy.value() == 0:
             time.sleep_ms(1)
 

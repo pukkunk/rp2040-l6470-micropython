@@ -1,4 +1,5 @@
 from l6470 import L6470
+from machine import SPI, Pin
 import pico_define as pd
 import time
 import machine
@@ -44,16 +45,27 @@ def start_tracking(motor, mode):
     motor.run(L6470.FWD, speed)
 
 def main():
-    motor = L6470(
-        spi_port = 0,
-        sck      = PIN_SCK,
-        mosi     = PIN_MOSI,
-        miso     = PIN_MISO,
-        cs       = PIN_CS,
-        busy     = PIN_BUSY,
-        resetn  = PIN_RESETN,
-        baudrate= SPI_CLK_01MHZ
+    spi = SPI(
+        0,
+        baudrate=1_000_000,
+        polarity=1,
+        phase=1,
+        sck=Pin(PIN_SCK),
+        mosi=Pin(PIN_MOSI),
+        miso=Pin(PIN_MISO),
     )
+
+    cs     = Pin(PIN_CS, Pin.OUT, value=1)
+    busy   = Pin(PIN_BUSY, Pin.IN)
+    resetn = Pin(PIN_RESETN, Pin.OUT, value=1)
+
+    motor = L6470(
+        spi=spi,
+        cs=cs,
+        busy=busy,
+        resetn=resetn,
+    )
+
     led = machine.Pin("LED", machine.Pin.OUT)  # LED端子を出力に設定
     led_on(led, 0)
 
