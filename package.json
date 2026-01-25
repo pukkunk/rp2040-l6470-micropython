@@ -1,0 +1,11 @@
+{
+  "name": "l6470",
+  "version": "0.1.0",
+  "description": "MicroPython driver for ST L6470 stepper motor driver",
+  "author": "pukkunk",
+  "license": "MIT",
+  "dependencies": [],
+  "files": [
+    "l6470"
+  ]
+}
