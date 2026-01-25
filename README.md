@@ -22,17 +22,10 @@ Pure MicroPython 実装で、SPI 経由で L6470 を直接制御します。
 
 ## インストール方法
 
-### 方法1：mip（推奨）
+### 手動インストール
 
-```
-python
-import mip
-mip.install("github:pukkunk/rp2040-l6470-micropython")
-```
-
-### 方法2：手動コピー
-
-l6470/ ディレクトリを Pico の /lib にコピーしてください。
+1. このリポジトリを clone または ZIP ダウンロード
+2. `l6470/ ディレクトリを Pico の /lib にコピーしてください。
 
 /lib/l6470/
 
