@@ -42,7 +42,7 @@ l6470/
 
 ## How to install (using mpremote)
 
-This library is **not yet compatible with MicroPython mip**.
+This library is **not compatible with MicroPython mip**.
 Please install it manually using `mpremote`.
 
 

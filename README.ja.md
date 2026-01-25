@@ -26,7 +26,7 @@ Pure MicroPython 実装で、SPI 経由で L6470 を直接制御します。
 ### 手動インストール
 
 
-このライブラリは**MicroPython mip とまだ互換性がありません**。
+このライブラリは**MicroPython mip と互換性がありません**。
 `mpremote` を使用して手動でインストールしてください。
 
 1. このリポジトリを clone してください。
