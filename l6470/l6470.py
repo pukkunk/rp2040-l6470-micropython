@@ -1,9 +1,9 @@
-# l6470.py
+# l6470/l6470.py
 # L6470 Stepper Motor Driver (MicroPython)
 # Datasheet based, clean-room implementation
 
-import pico_define as pd
 import time
+from . import registers as reg
 
 class L6470:
     REV = 0  # 逆回転

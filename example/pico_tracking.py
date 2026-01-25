@@ -1,6 +1,6 @@
 from l6470 import L6470
+from l6470 import registers as reg
 from machine import SPI, Pin
-import pico_define as pd
 import time
 import machine
 
@@ -95,9 +95,9 @@ def main():
     motor.set_KVAL_RUN(0x40)
 
     step_mode = (
-        pd.L6470_STEPMODE_SYNCEN_DISABLE |
-        pd.L6470_STEPMODE_SYNCSEL0 |
-        pd.L6470_STEPMODE_STEPSEL_DIV1_128_MICROSTEP
+        reg.STEPMODE_SYNCEN_DISABLE |
+        reg.STEPMODE_SYNCSEL0 |
+        reg.STEPMODE_STEPSEL_DIV1_128_MICROSTEP
     )
     motor.set_param("STEP_MODE", step_mode)
 

@@ -4,6 +4,8 @@ STMicroelectronics **L6470 ステッピングモータドライバ** を
 **Raspberry Pi Pico (RP2040) + MicroPython** から制御するための  
 シンプルなドライバ実装です。
 
+Pure MicroPython 実装で、SPI 経由で L6470 を直接制御します。
+
 ---
 
 ## 現在できること
@@ -14,6 +16,33 @@ STMicroelectronics **L6470 ステッピングモータドライバ** を
 - BUSY ピンによる動作同期
 - USB 給電環境でも安定して回転
 - 自動生成された `set_xxx()` / `get_xxx()` API が利用可能
+
+
+---
+
+## インストール方法
+
+### 方法1：mip（推奨）
+
+```
+python
+import mip
+mip.install("github:pukkunk/rp2040-l6470-micropython")
+```
+
+### 方法2：手動コピー
+
+l6470/ ディレクトリを Pico の /lib にコピーしてください。
+
+/lib/l6470/
+
+#ライブラリ構成
+```
+l6470/
+├─ __init__.py
+├─ l6470.py        # L6470 ドライバ本体
+└─ registers.py   # レジスタ・定数定義
+```
 
 ---
 
@@ -60,8 +89,5 @@ STMicroelectronics **L6470 ステッピングモータドライバ** を
 - MicroPython
 - L6470 ステッピングモータドライバ
 
-
----
-
-ピン番号は `L6470()引数で指定する。
-
+#ライセンス
+MIT License
