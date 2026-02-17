@@ -76,6 +76,7 @@ Pico 内の構成は以下になります。
 
 
 ##サンプル
+```
 # example/minimal.py
 from machine import SPI, Pin
 from l6470 import L6470
