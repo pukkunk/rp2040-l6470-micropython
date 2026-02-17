@@ -38,8 +38,7 @@ Pure MicroPython 実装で、SPI 経由で L6470 を直接制御します。
 ```
 l6470/
 ├─ __init__.py
-├─ l6470.py        # L6470 ドライバ本体
-└─ registers.py   # レジスタ・定数定義
+└─ l6470.py        # L6470 ドライバ本体
 ```
 
 ---
@@ -47,24 +46,22 @@ l6470/
 ## インストール方法（mpremote 使用）
 
 ※ 本ライブラリは **MicroPython 標準の mip には未対応**です。  
-GitHub から clone し、`mpremote` を使って Pico に転送してください。
+GitHub から `mpremote` を使って Pico に転送してください。
 
-### 1. リポジトリを取得（Windows）
+### 1. githubから転送（Windows）
 
-```bat
-git clone https://github.com/pukkunk/rp2040-l6470-micropython.git
-cd rp2040-l6470-micropython
 ```
-
-### 2. Pico に接続（COM3 は環境に応じて変更）
-```bat
-mpremote connect COM3 reset
+mpremote fs mkdir :/lib
+mpremote mip install github:pukkunk/rp2040-l6470-micropython/l6470/__init__.py
+mpremote mip install github:pukkunk/rp2040-l6470-micropython/l6470/l6470.py
 ```
-
-### 3. ライブラリを Pico に転送
-```bat
-mpremote connect COM3 mkdir :/lib
-mpremote connect COM3 cp -r l6470 :/lib
+### 2. サンプルプログラムを main.py として転送
+```
+mpremote fs cp example\minimal.py :/main.py
+```
+### 3. 実行（リセット）
+```
+mpremote reset
 ```
 
 Pico 内の構成は以下になります。
@@ -75,39 +72,50 @@ Pico 内の構成は以下になります。
   l6470/
     __init__.py
     l6470.py
-    registers.py
-```
-
-### 4. サンプルプログラムを main.py として転送
-
-```bat
-mpremote connect COM3 cp example\pico_tracking.py :/main.py
-```
-
-### 5. 実行（リセット）
-```bat
-mpremote connect COM3 reset
 ```
 
 
 ##サンプル
-example/minimal.py
-```python
 # example/minimal.py
 from machine import SPI, Pin
 from l6470 import L6470
 import time
+from l6470 import (
+    STEPMODE_SYNCEN_DISABLE,
+    STEPMODE_SYNCSEL0,
+    STEPMODE_STEPSEL_DIV1_128_MICROSTEP
+)
 
 spi = SPI(0, baudrate=1_000_000, polarity=1, phase=1, sck=Pin(2), mosi=Pin(3), miso=Pin(4))
 cs = Pin(5, Pin.OUT, value=1)
 busy = Pin(0, Pin.IN)
-motor = L6470(spi=spi, cs=cs, busy=busy)
+resetn = Pin(6, Pin.OUT, value=1)  # Pico GPIO6
+motor = L6470(spi=spi, cs=cs, busy=busy, resetn=resetn)
 
-motor.set_ACC(0x05)
-motor.set_DEC(0x05)
-motor.set_MAX_SPEED(0x200)
-motor.run(L6470.FWD, 0x2000)
+# ------------------- パラメータ設定 -------------------
+motor.set_ACC(0x05)        # ゆっくり立ち上げ
+motor.set_DEC(0x05)        # ゆっくり停止
+motor.set_MAX_SPEED(0x20)  # 上限を抑える（暴走防止）
+motor.set_MIN_SPEED(0x00)  # 完全に停止可能
+motor.set_FS_SPD(0x000)    # フルステップ遷移禁止
 
+motor.set_KVAL_HOLD(0x50)
+motor.set_KVAL_ACC(0x50)
+motor.set_KVAL_RUN(0x40)
+motor.set_KVAL_DEC(0x50)
+
+# ------------------- ステップモード設定 -------------------
+step_mode = (
+    STEPMODE_SYNCEN_DISABLE |
+    STEPMODE_SYNCSEL0 |
+    STEPMODE_STEPSEL_DIV1_128_MICROSTEP
+)
+motor.set_param("STEP_MODE", step_mode)
+
+# ------------------- モーター前進 -------------------
+motor.run(L6470.FWD, 0x20)  # 安全低速で回転
+
+# ------------------- 無限ループ -------------------
 while True:
     time.sleep(1)
 ```
