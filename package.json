@@ -8,6 +8,5 @@
   "files": [
     "l6470/__init__.py",
     "l6470/l6470.py",
-    "l6470/registers.py"
   ]
 }
