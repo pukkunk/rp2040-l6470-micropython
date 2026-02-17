@@ -1,8 +1,12 @@
 # example/minimal.py
 from machine import SPI, Pin
-from l6470 import registers as reg
 from l6470 import L6470
 import time
+from l6470 import (
+    STEPMODE_SYNCEN_DISABLE,
+    STEPMODE_SYNCSEL0,
+    STEPMODE_STEPSEL_DIV1_128_MICROSTEP
+)
 
 spi = SPI(0, baudrate=1_000_000, polarity=1, phase=1, sck=Pin(2), mosi=Pin(3), miso=Pin(4))
 cs = Pin(5, Pin.OUT, value=1)
@@ -24,9 +28,9 @@ motor.set_KVAL_DEC(0x50)
 
 # ------------------- ステップモード設定 -------------------
 step_mode = (
-    reg.STEPMODE_SYNCEN_DISABLE |
-    reg.STEPMODE_SYNCSEL0 |
-    reg.STEPMODE_STEPSEL_DIV1_128_MICROSTEP
+    STEPMODE_SYNCEN_DISABLE |
+    STEPMODE_SYNCSEL0 |
+    STEPMODE_STEPSEL_DIV1_128_MICROSTEP
 )
 motor.set_param("STEP_MODE", step_mode)
 
@@ -36,4 +40,3 @@ motor.run(L6470.FWD, 0x20)  # 安全低速で回転
 # ------------------- 無限ループ -------------------
 while True:
     time.sleep(1)
-

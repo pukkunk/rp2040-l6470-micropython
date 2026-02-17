@@ -146,6 +146,7 @@ while True:
 | out +    | VS+ |
 | GND       | GND |
 
+![](doc/img/Connection_Diagram.png)
 
 ## Operating environment
 

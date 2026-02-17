@@ -151,6 +151,8 @@ while True:
 | GND       | GND |
 
 
+![](doc/img/Connection_Diagram.png)
+
 ## 動作環境
 
 - Raspberry Pi Pico / RP2040

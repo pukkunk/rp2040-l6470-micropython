@@ -1,8 +1,12 @@
 from l6470 import L6470
-from l6470 import registers as reg
 from machine import SPI, Pin
 import time
 import machine
+from l6470 import (
+    STEPMODE_SYNCEN_DISABLE,
+    STEPMODE_SYNCSEL0,
+    STEPMODE_STEPSEL_DIV1_128_MICROSTEP
+)
 
 # ピン定義
 PIN_SCK = 2     # → GPIO2 (GP2)    # pin No #04
@@ -95,9 +99,9 @@ def main():
     motor.set_KVAL_RUN(0x40)
 
     step_mode = (
-        reg.STEPMODE_SYNCEN_DISABLE |
-        reg.STEPMODE_SYNCSEL0 |
-        reg.STEPMODE_STEPSEL_DIV1_128_MICROSTEP
+        STEPMODE_SYNCEN_DISABLE |
+        STEPMODE_SYNCSEL0 |
+        STEPMODE_STEPSEL_DIV1_128_MICROSTEP
     )
     motor.set_param("STEP_MODE", step_mode)
 
@@ -138,4 +142,3 @@ def led_off(led, wait_time_sec: float):
 
 if __name__ == "__main__":
     main()
-
