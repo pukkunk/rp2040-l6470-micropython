@@ -32,11 +32,9 @@ Pure MicroPython 実装で、SPI 経由で L6470 を直接制御します。
 1. このリポジトリを clone してください。
 2. `l6470/ ディレクトリを Pico の /lib にコピーしてください。
 
-/lib/l6470/
-
 #ライブラリ構成
 ```
-l6470/
+/lib
 ├─ __init__.py
 └─ l6470.py        # L6470 ドライバ本体
 ```
@@ -69,14 +67,13 @@ Pico 内の構成は以下になります。
 :/
   main.py
 /lib
-  l6470/
     __init__.py
     l6470.py
 ```
 
 
-##サンプル
 ```
+##サンプル
 # example/minimal.py
 from machine import SPI, Pin
 from l6470 import L6470

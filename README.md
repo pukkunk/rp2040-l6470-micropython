@@ -27,11 +27,10 @@ This is a **pure MicroPython implementation** that directly controls the L6470 v
 1. Clone the repository (Windows)
 2. Copy the `l6470/ directory to /lib on your Pico.
 
-/lib/l6470/
 
 #Library Configuration
 ```
-l6470/
+/lib/
 ├─ __init__.py
 └─ l6470.py        # L6470 driver body
 ```
@@ -66,8 +65,7 @@ The internal configuration of Pico is as follows:
 ```
 :/
   main.py
-/lib
-  l6470/
+/lib/
     __init__.py
     l6470.py
 ```
