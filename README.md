@@ -1,7 +1,7 @@
 # L6470 MicroPython Driver (RP2040 / Raspberry Pi Pico)
 日本語版はこちら → [README.ja.md](README.ja.md)
 
-MicroPython library for controlling L6470 stepper motor driver on RP2040 (Raspberry Pi Pico).
+MicroPython library for controlling L6470 stepper motor driver on RP2040 (Raspberry Pi Pico).  
 A simple **MicroPython driver** for the STMicroelectronics **L6470 stepper motor driver**,
 designed for **Raspberry Pi Pico (RP2040)**.
 
