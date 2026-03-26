@@ -1,6 +1,7 @@
 # L6470 MicroPython Driver (RP2040 / Raspberry Pi Pico)
 English version → [README.md](README.md)
 
+RP2040（Raspberry Pi Pico）上でL6470ステッピングモータードライバーを制御するためのMicroPythonライブラリ。
 STMicroelectronics **L6470 ステッピングモータドライバ** を  
 **Raspberry Pi Pico (RP2040) + MicroPython** から制御するための  
 シンプルなドライバ実装です。
