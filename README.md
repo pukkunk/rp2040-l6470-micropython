@@ -163,5 +163,5 @@ while True:
 - MicroPython
 - L6470 Stepping Motor Driver
 
-#license
+## license
 MIT License

@@ -166,5 +166,5 @@ while True:
 - MicroPython
 - L6470 ステッピングモータドライバ
 
-#ライセンス
+## ライセンス
 MIT License
